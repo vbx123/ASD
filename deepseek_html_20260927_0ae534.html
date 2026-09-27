@@ -1,0 +1,1657 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>مدير المشاريع والملاحظات - مع ترجمة فورية ومشغل موسيقى</title>
+  <style>
+    :root {
+      --bg-main: #0f172a;
+      --bg-sidebar: #1e293b;
+      --bg-card: #334155;
+      --bg-card-hover: #475569;
+      --accent: #3b82f6;
+      --accent-hover: #2563eb;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --danger: #ef4444;
+      --danger-hover: #dc2626;
+      --success: #22c55e;
+      --border: #475569;
+      --radius: 8px;
+      --music-accent: #8b5cf6;
+      --music-accent-hover: #7c3aed;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-main);
+      color: var(--text-main);
+      height: 100vh;
+      display: flex;
+      overflow: hidden;
+    }
+
+    /* ===== القائمة الجانبية ===== */
+    sidebar {
+      width: 280px;
+      background-color: var(--bg-sidebar);
+      border-left: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      padding: 1rem;
+      flex-shrink: 0;
+      position: relative;
+    }
+
+    .sidebar-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+    }
+
+    .sidebar-header h2 {
+      font-size: 1.2rem;
+      color: var(--text-main);
+    }
+
+    .projects-list {
+      list-style: none;
+      flex-grow: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      padding-bottom: 60px;
+    }
+
+    .project-item {
+      padding: 0.75rem 1rem;
+      border-radius: var(--radius);
+      background-color: transparent;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: background 0.15s;
+    }
+
+    .project-item:hover {
+      background-color: var(--bg-card);
+    }
+
+    .project-item.active {
+      background-color: var(--accent);
+      color: #fff;
+    }
+
+    .project-item span {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 170px;
+    }
+
+    /* ===== المحتوى الرئيسي ===== */
+    main {
+      flex-grow: 1;
+      display: flex;
+      flex-direction: column;
+      background-color: var(--bg-main);
+      overflow: hidden;
+    }
+
+    .top-bar {
+      padding: 1rem 1.5rem;
+      background-color: var(--bg-sidebar);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .top-bar h1 {
+      font-size: 1.5rem;
+      flex: 1;
+      min-width: 150px;
+    }
+
+    .top-bar-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .btn-lang-toggle {
+      background-color: var(--bg-card);
+      color: var(--text-main);
+      border: 1px solid var(--border);
+      padding: 0.5rem 0.75rem;
+      border-radius: var(--radius);
+      cursor: pointer;
+      font-size: 0.9rem;
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+      transition: all 0.15s;
+    }
+
+    .btn-lang-toggle:hover {
+      background-color: var(--bg-card-hover);
+    }
+
+    .btn-lang-toggle.active {
+      border-color: var(--success);
+      background-color: var(--success);
+      color: #000;
+    }
+
+    .lang-indicator {
+      font-weight: bold;
+      padding: 2px 8px;
+      border-radius: 4px;
+      background-color: var(--bg-main);
+    }
+
+    .tabs-bar {
+      display: flex;
+      background-color: #0b1120;
+      padding: 0.5rem 1rem 0;
+      gap: 0.25rem;
+      border-bottom: 1px solid var(--border);
+      overflow-x: auto;
+    }
+
+    .tab {
+      padding: 0.5rem 1rem;
+      background-color: var(--bg-sidebar);
+      border-radius: var(--radius) var(--radius) 0 0;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      max-width: 200px;
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      border: 1px solid transparent;
+      border-bottom: none;
+      transition: all 0.15s;
+    }
+
+    .tab.active {
+      background-color: var(--bg-card);
+      color: var(--text-main);
+      border-color: var(--border);
+    }
+
+    .tab span {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .notes-container {
+      flex-grow: 1;
+      padding: 1.5rem;
+      overflow-y: auto;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+      gap: 1.5rem;
+      align-content: start;
+    }
+
+    .note-card {
+      background-color: var(--bg-sidebar);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+      min-height: 300px;
+      height: auto;
+      contain: layout style paint;
+    }
+
+    .note-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .note-title-input {
+      background: transparent;
+      border: none;
+      color: var(--text-main);
+      font-weight: bold;
+      font-size: 1.1rem;
+      width: 100%;
+      outline: none;
+      border-bottom: 1px solid transparent;
+      padding: 0.25rem 0;
+    }
+
+    .note-title-input:focus {
+      border-bottom-color: var(--accent);
+    }
+
+    .note-body {
+      flex-grow: 1;
+      background-color: var(--bg-main);
+      border: 1px solid var(--border);
+      border-radius: calc(var(--radius) - 2px);
+      padding: 0.75rem;
+      color: var(--text-main);
+      resize: vertical;
+      outline: none;
+      font-size: 0.95rem;
+      line-height: 1.6;
+      min-height: 120px;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      will-change: contents;
+    }
+
+    .note-body:focus {
+      border-color: var(--accent);
+    }
+
+    .note-actions {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      padding-top: 0.5rem;
+      border-top: 1px solid var(--border);
+    }
+
+    .note-stats {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      display: flex;
+      gap: 0.75rem;
+    }
+
+    .note-stats span {
+      background: var(--bg-main);
+      padding: 0.15rem 0.5rem;
+      border-radius: 4px;
+    }
+
+    .btn-group {
+      display: flex;
+      gap: 0.3rem;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      background-color: var(--accent);
+      color: white;
+      border: none;
+      padding: 0.4rem 0.8rem;
+      border-radius: var(--radius);
+      cursor: pointer;
+      font-size: 0.8rem;
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+      transition: background 0.15s;
+      white-space: nowrap;
+    }
+
+    .btn:hover {
+      background-color: var(--accent-hover);
+    }
+
+    .btn-success {
+      background-color: var(--success);
+      color: #000;
+    }
+
+    .btn-success:hover {
+      background-color: #16a34a;
+    }
+
+    .btn-danger {
+      background-color: var(--danger);
+    }
+
+    .btn-danger:hover {
+      background-color: var(--danger-hover);
+    }
+
+    .btn-icon {
+      background: transparent;
+      color: var(--text-muted);
+      padding: 0.3rem 0.5rem;
+      border-radius: 4px;
+      border: none;
+      cursor: pointer;
+      font-size: 0.8rem;
+      transition: all 0.15s;
+    }
+
+    .btn-icon:hover {
+      background-color: var(--bg-card);
+      color: var(--text-main);
+    }
+
+    .btn-music {
+      background: linear-gradient(135deg, var(--music-accent), #a78bfa);
+      color: white;
+      border: none;
+      padding: 0.5rem 0.75rem;
+      border-radius: var(--radius);
+      cursor: pointer;
+      font-size: 0.9rem;
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+      transition: all 0.15s;
+    }
+
+    .btn-music:hover {
+      background: linear-gradient(135deg, var(--music-accent-hover), var(--music-accent));
+      transform: scale(1.02);
+    }
+
+    .btn-music.active {
+      box-shadow: 0 0 15px rgba(139, 92, 246, 0.5);
+    }
+
+    .empty-state {
+      grid-column: 1 / -1;
+      text-align: center;
+      color: var(--text-muted);
+      margin-top: 3rem;
+    }
+
+    .empty-state small {
+      display: block;
+      margin-top: 0.5rem;
+      opacity: 0.7;
+    }
+
+    /* ===== Toast ===== */
+    .toast {
+      position: fixed;
+      bottom: 1.5rem;
+      left: 1.5rem;
+      background-color: var(--bg-card);
+      color: white;
+      padding: 0.75rem 1.5rem;
+      border-radius: var(--radius);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+      opacity: 0;
+      transform: translateY(20px);
+      transition: all 0.2s ease;
+      pointer-events: none;
+      z-index: 9999;
+      border: 1px solid var(--border);
+      max-width: 90%;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .toast.success {
+      border-color: var(--success);
+    }
+
+    .toast.error {
+      border-color: var(--danger);
+    }
+
+    /* ===== Modal ===== */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.7);
+      z-index: 10000;
+      justify-content: center;
+      align-items: center;
+      backdrop-filter: blur(4px);
+    }
+
+    .modal-overlay.show {
+      display: flex;
+    }
+
+    .modal-box {
+      background: var(--bg-sidebar);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 2rem;
+      max-width: 450px;
+      width: 90%;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
+    }
+
+    .modal-box h3 {
+      font-size: 1.3rem;
+      margin-bottom: 1rem;
+      color: var(--text-main);
+    }
+
+    .modal-box p {
+      color: var(--text-muted);
+      margin-bottom: 1.5rem;
+      line-height: 1.6;
+    }
+
+    .modal-box input {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      background: var(--bg-main);
+      color: var(--text-main);
+      font-size: 1rem;
+      margin-bottom: 1.5rem;
+      outline: none;
+    }
+
+    .modal-box input:focus {
+      border-color: var(--accent);
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 0.75rem;
+      justify-content: flex-end;
+    }
+
+    .modal-actions .btn {
+      padding: 0.6rem 1.5rem;
+      font-size: 0.95rem;
+    }
+
+    .modal-actions .btn-secondary {
+      background: var(--bg-card);
+      color: var(--text-main);
+    }
+
+    .modal-actions .btn-secondary:hover {
+      background: var(--bg-card-hover);
+    }
+
+    /* ===== Music Player ===== */
+    .music-modal-box {
+      max-width: 550px;
+    }
+
+    .music-options {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .music-option-btn {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 1rem 1.25rem;
+      background: var(--bg-card);
+      border: 2px solid var(--border);
+      border-radius: var(--radius);
+      cursor: pointer;
+      transition: all 0.2s;
+      text-align: right;
+      width: 100%;
+      color: var(--text-main);
+      font-size: 1rem;
+    }
+
+    .music-option-btn:hover {
+      border-color: var(--music-accent);
+      background: var(--bg-card-hover);
+      transform: translateX(-5px);
+    }
+
+    .music-option-btn .icon {
+      font-size: 2rem;
+      flex-shrink: 0;
+    }
+
+    .music-option-btn .text {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+
+    .music-option-btn .text small {
+      color: var(--text-muted);
+      font-size: 0.8rem;
+    }
+
+    .music-player-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: linear-gradient(135deg, #1e1b4b, #312e81);
+      border-top: 2px solid var(--music-accent);
+      padding: 0.75rem 1.5rem;
+      display: none;
+      align-items: center;
+      gap: 1rem;
+      z-index: 9998;
+      box-shadow: 0 -4px 20px rgba(139, 92, 246, 0.3);
+    }
+
+    .music-player-bar.show {
+      display: flex;
+    }
+
+    .music-info {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      flex: 1;
+      min-width: 0;
+    }
+
+    .music-icon {
+      font-size: 1.5rem;
+      animation: musicPulse 1.5s ease-in-out infinite;
+    }
+
+    @keyframes musicPulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.15); }
+    }
+
+    .music-details {
+      display: flex;
+      flex-direction: column;
+      gap: 0.15rem;
+      min-width: 0;
+    }
+
+    .music-title {
+      font-weight: bold;
+      font-size: 0.9rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      color: #e0e7ff;
+    }
+
+    .music-source {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+    }
+
+    .music-controls {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .music-btn {
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: white;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.9rem;
+      transition: all 0.2s;
+    }
+
+    .music-btn:hover {
+      background: rgba(255, 255, 255, 0.2);
+      transform: scale(1.1);
+    }
+
+    .music-btn.play-btn {
+      width: 42px;
+      height: 42px;
+      background: var(--music-accent);
+      border-color: var(--music-accent);
+      font-size: 1.1rem;
+    }
+
+    .music-btn.play-btn:hover {
+      background: var(--music-accent-hover);
+    }
+
+    .music-volume {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      min-width: 120px;
+    }
+
+    .music-volume input[type="range"] {
+      width: 80px;
+      accent-color: var(--music-accent);
+    }
+
+    .music-progress {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: rgba(255, 255, 255, 0.1);
+      cursor: pointer;
+    }
+
+    .music-progress-bar {
+      height: 100%;
+      background: linear-gradient(90deg, var(--music-accent), #a78bfa);
+      width: 0%;
+      transition: width 0.1s linear;
+    }
+
+    .music-close {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 1.2rem;
+      padding: 0.25rem;
+      transition: color 0.2s;
+    }
+
+    .music-close:hover {
+      color: var(--danger);
+    }
+
+    /* Local files list */
+    .local-files-list {
+      max-height: 200px;
+      overflow-y: auto;
+      margin-bottom: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .local-file-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 0.75rem;
+      background: var(--bg-card);
+      border-radius: var(--radius);
+      font-size: 0.85rem;
+      color: var(--text-main);
+    }
+
+    .local-file-item .file-name {
+      flex: 1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .local-file-item .file-remove {
+      background: transparent;
+      border: none;
+      color: var(--danger);
+      cursor: pointer;
+      font-size: 1rem;
+      padding: 0 0.25rem;
+    }
+
+    .file-input-label {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      padding: 0.75rem;
+      background: var(--bg-card);
+      border: 2px dashed var(--border);
+      border-radius: var(--radius);
+      cursor: pointer;
+      transition: all 0.2s;
+      color: var(--text-muted);
+      margin-bottom: 1rem;
+    }
+
+    .file-input-label:hover {
+      border-color: var(--music-accent);
+      color: var(--music-accent);
+    }
+
+    .file-input-label input[type="file"] {
+      display: none;
+    }
+
+    /* ===== Responsive ===== */
+    @media (max-width: 768px) {
+      sidebar {
+        width: 200px;
+        padding: 0.5rem;
+      }
+      .notes-container {
+        grid-template-columns: 1fr;
+        padding: 1rem;
+      }
+      .top-bar {
+        padding: 0.75rem;
+      }
+      .top-bar h1 {
+        font-size: 1.1rem;
+      }
+      .modal-box {
+        padding: 1.5rem;
+        margin: 1rem;
+      }
+      .music-player-bar {
+        padding: 0.5rem 0.75rem;
+        gap: 0.5rem;
+      }
+      .music-volume {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ===== القائمة الجانبية ===== -->
+  <sidebar>
+    <div class="sidebar-header">
+      <h2>📁 المشاريع</h2>
+      <button class="btn" onclick="showNewProjectModal()">+ جديد</button>
+    </div>
+    <ul class="projects-list" id="projectsList"></ul>
+  </sidebar>
+
+  <!-- ===== المحتوى الرئيسي ===== -->
+  <main>
+    <div class="top-bar">
+      <h1 id="currentProjectTitle">اختر مشروعاً</h1>
+      <div class="top-bar-actions">
+        <button class="btn-music" id="musicBtn" onclick="showMusicDialog()" title="مشغل الموسيقى">
+          <span>🎵</span>
+          <span>موسيقى</span>
+        </button>
+        <button class="btn-lang-toggle active" id="langToggleBtn" onclick="toggleArabicMode()" title="تفعيل/إلغاء الترجمة التلقائية">
+          <span>⌨️</span>
+          <span id="langLabel">عربي</span>
+          <span class="lang-indicator" id="langIndicator">AR</span>
+        </button>
+        <button class="btn" id="addNoteBtn" onclick="createNewNote()" style="display: none;">➕ ملاحظة</button>
+      </div>
+    </div>
+
+    <div class="tabs-bar" id="tabsBar"></div>
+
+    <div class="notes-container" id="notesContainer">
+      <div class="empty-state">📝 اختر أو أنشئ مشروعاً للبدء في إضافة الملاحظات</div>
+    </div>
+  </main>
+
+  <!-- ===== شريط مشغل الموسيقى ===== -->
+  <div class="music-player-bar" id="musicPlayerBar">
+    <div class="music-progress" onclick="seekMusic(event)">
+      <div class="music-progress-bar" id="musicProgressBar"></div>
+    </div>
+    <div class="music-info">
+      <span class="music-icon" id="musicIcon">🎵</span>
+      <div class="music-details">
+        <span class="music-title" id="musicTitle">—</span>
+        <span class="music-source" id="musicSource">—</span>
+      </div>
+    </div>
+    <div class="music-controls">
+      <button class="music-btn" onclick="prevTrack()" title="السابق">⏮️</button>
+      <button class="music-btn play-btn" id="playPauseBtn" onclick="togglePlayPause()" title="تشغيل/إيقاف">▶️</button>
+      <button class="music-btn" onclick="nextTrack()" title="التالي">⏭️</button>
+      <button class="music-btn" id="shuffleBtn" onclick="toggleShuffle()" title="عشوائي">🔀</button>
+      <button class="music-btn" id="repeatBtn" onclick="toggleRepeat()" title="تكرار">🔁</button>
+    </div>
+    <div class="music-volume">
+      <span>🔊</span>
+      <input type="range" id="volumeSlider" min="0" max="100" value="70" oninput="setVolume(this.value)">
+    </div>
+    <button class="music-close" onclick="closeMusicPlayer()" title="إغلاق">✕</button>
+  </div>
+
+  <!-- ===== Toast ===== -->
+  <div class="toast" id="toast">تم النسخ بنجاح!</div>
+
+  <!-- ===== Modal عام ===== -->
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal-box" id="modalBox">
+      <h3 id="modalTitle">📁 مشروع جديد</h3>
+      <p id="modalMessage">أدخل اسم المشروع الجديد:</p>
+      <input type="text" id="modalInput" placeholder="اسم المشروع..." dir="rtl">
+      <div class="modal-actions">
+        <button class="btn btn-secondary" onclick="closeModal()">إلغاء</button>
+        <button class="btn" id="modalConfirmBtn" onclick="confirmModal()">تأكيد</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Modal الموسيقى ===== -->
+  <div class="modal-overlay" id="musicModalOverlay">
+    <div class="modal-box music-modal-box">
+      <h3>🎵 مشغل الموسيقى</h3>
+      <p>اختر مصدر الموسيقى:</p>
+      <div class="music-options" id="musicOptions">
+        <button class="music-option-btn" onclick="startOnlineMusic()">
+          <span class="icon">🌐</span>
+          <div class="text">
+            <span>أغاني مخزنة مسبقاً (أونلاين)</span>
+            <small>تشغيل تلقائي وعشوائي من مكتبة المستودع</small>
+          </div>
+        </button>
+        <button class="music-option-btn" onclick="showLocalMusicDialog()">
+          <span class="icon">📂</span>
+          <div class="text">
+            <span>تخزين محلي</span>
+            <small>اختر ملفات صوتية من جهازك</small>
+          </div>
+        </button>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-secondary" onclick="closeMusicModal()">إلغاء</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Modal المحلي ===== -->
+  <div class="modal-overlay" id="localMusicModalOverlay">
+    <div class="modal-box music-modal-box">
+      <h3>📂 موسيقى محلية</h3>
+      <p>اختر ملفات صوتية من جهازك:</p>
+      <label class="file-input-label">
+        <span>📁 اختر ملفات صوتية</span>
+        <input type="file" id="localFileInput" accept="audio/*" multiple onchange="handleLocalFiles(event)">
+      </label>
+      <div class="local-files-list" id="localFilesList"></div>
+      <div class="modal-actions">
+        <button class="btn btn-secondary" onclick="closeLocalMusicModal()">إلغاء</button>
+        <button class="btn btn-success" id="playLocalBtn" onclick="playLocalMusic()" disabled>▶️ تشغيل</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ==============================================
+    //  متغيرات الـ Modal
+    // ==============================================
+    let modalCallback = null;
+    let modalData = null;
+
+    function showModal(title, message, placeholder, callback, data = null) {
+      document.getElementById('modalTitle').textContent = title;
+      document.getElementById('modalMessage').textContent = message;
+      const input = document.getElementById('modalInput');
+      input.value = '';
+      input.placeholder = placeholder || '...';
+      input.style.display = 'block';
+      document.getElementById('modalOverlay').classList.add('show');
+      modalCallback = callback;
+      modalData = data;
+      setTimeout(() => input.focus(), 100);
+    }
+
+    function closeModal() {
+      document.getElementById('modalOverlay').classList.remove('show');
+      modalCallback = null;
+      modalData = null;
+    }
+
+    function confirmModal() {
+      const input = document.getElementById('modalInput');
+      const value = input.value.trim();
+      if (modalCallback) {
+        modalCallback(value, modalData);
+      }
+      closeModal();
+    }
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        closeModal();
+        closeMusicModal();
+        closeLocalMusicModal();
+      }
+      if (e.key === 'Enter' && document.getElementById('modalOverlay').classList.contains('show')) {
+        confirmModal();
+      }
+    });
+
+    // ==============================================
+    //  خريطة تحويل QWERTY إلى العربية
+    // ==============================================
+    const arabicMap = {
+      'q': 'ض', 'w': 'ص', 'e': 'ث', 'r': 'ق', 't': 'ف',
+      'y': 'غ', 'u': 'ع', 'i': 'ه', 'o': 'خ', 'p': 'ح',
+      '[': 'ج',
+      'a': 'ش', 's': 'س', 'd': 'ي', 'f': 'ب', 'g': 'ل',
+      'h': 'ا', 'j': 'ت', 'k': 'ن', 'l': 'م',
+      ';': 'ك', "'": 'ط',
+      'z': 'ئ', 'x': 'ء', 'c': 'ؤ', 'v': 'ر', 'b': 'ى',
+      'n': 'ة', 'm': 'و',
+      ',': 'ز', '.': 'ظ', '/': '؟',
+      ']': 'د', '`': 'ذ',
+      'Q': 'ض', 'W': 'ص', 'E': 'ث', 'R': 'ق', 'T': 'ف',
+      'Y': 'غ', 'U': 'ع', 'I': 'ه', 'O': 'خ', 'P': 'ح',
+      'A': 'ش', 'S': 'س', 'D': 'ي', 'F': 'ب', 'G': 'ل',
+      'H': 'ا', 'J': 'ت', 'K': 'ن', 'L': 'م',
+      'Z': 'ئ', 'X': 'ء', 'C': 'ؤ', 'V': 'ر', 'B': 'ى',
+      'N': 'ة', 'M': 'و'
+    };
+
+    // ==============================================
+    //  متغيرات الوضع
+    // ==============================================
+    let isArabicMode = true;
+    const savedMode = localStorage.getItem('arabic_mode');
+    if (savedMode === 'false') {
+      isArabicMode = false;
+    }
+
+    // ==============================================
+    //  دوال تحويل النص - محسّنة للسرعة
+    // ==============================================
+    function convertToArabic(text) {
+      if (!isArabicMode) return text;
+      let result = '';
+      for (let i = 0; i < text.length; i++) {
+        const char = text[i];
+        result += arabicMap[char] || char;
+      }
+      return result;
+    }
+
+    function handleArabicInput(event) {
+      if (!isArabicMode) return;
+      const input = event.target;
+      const cursorPos = input.selectionStart;
+      const oldValue = input.value;
+      const lastChar = oldValue[cursorPos - 1];
+
+      if (lastChar && arabicMap[lastChar]) {
+        const newValue = oldValue.substring(0, cursorPos - 1) + arabicMap[lastChar] + oldValue.substring(cursorPos);
+        input.value = newValue;
+        input.selectionStart = cursorPos;
+        input.selectionEnd = cursorPos;
+      }
+    }
+
+    // ==============================================
+    //  إدارة الوضع العربي
+    // ==============================================
+    function setArabicMode(enabled) {
+      isArabicMode = enabled;
+      localStorage.setItem('arabic_mode', enabled.toString());
+
+      const btn = document.getElementById('langToggleBtn');
+      const label = document.getElementById('langLabel');
+      const indicator = document.getElementById('langIndicator');
+
+      if (enabled) {
+        btn.classList.add('active');
+        label.textContent = 'عربي';
+        indicator.textContent = 'AR';
+        indicator.style.color = '#4ade80';
+        showToast('✅ الترجمة التلقائية مفعلة', 'success');
+      } else {
+        btn.classList.remove('active');
+        label.textContent = 'English';
+        indicator.textContent = 'EN';
+        indicator.style.color = '#60a5fa';
+        showToast('❌ الترجمة التلقائية معطلة', 'error');
+      }
+    }
+
+    function toggleArabicMode() {
+      setArabicMode(!isArabicMode);
+    }
+
+    // ==============================================
+    //  دوال النسخ المتقدم
+    // ==============================================
+    function copyOriginalText(content) {
+      if (!content) {
+        showToast('⚠️ الملاحظة فارغة!', 'error');
+        return;
+      }
+      navigator.clipboard.writeText(content).then(() => {
+        showToast('📋 تم نسخ النص الأصلي!', 'success');
+      }).catch(() => {
+        showToast('❌ فشل النسخ!', 'error');
+      });
+    }
+
+    function copyTranslatedText(content) {
+      if (!content) {
+        showToast('⚠️ الملاحظة فارغة!', 'error');
+        return;
+      }
+      const translated = convertToArabic(content);
+      navigator.clipboard.writeText(translated).then(() => {
+        showToast('📋 تم نسخ النص المترجم!', 'success');
+      }).catch(() => {
+        showToast('❌ فشل النسخ!', 'error');
+      });
+    }
+
+    function selectAllText(textareaId) {
+      const textarea = document.getElementById(textareaId);
+      if (textarea) {
+        textarea.select();
+        textarea.setSelectionRange(0, textarea.value.length);
+        showToast('✅ تم تحديد كل النص', 'success');
+      }
+    }
+
+    function clearNoteContent(noteId) {
+      showModal('🗑️ مسح المحتوى', 'هل أنت متأكد من مسح كل محتوى هذه الملاحظة؟', '', (confirmed) => {
+        if (confirmed === 'تأكيد' || confirmed === 'نعم' || confirmed === 'yes') {
+          const project = state.projects.find(p => p.id === state.activeProjectId);
+          if (!project) return;
+          const note = project.notes.find(n => n.id === noteId);
+          if (note) {
+            note.content = '';
+            saveData();
+            renderNotes();
+            showToast('🗑️ تم مسح المحتوى', 'success');
+          }
+        }
+      });
+    }
+
+    // ==============================================
+    //  حساب الإحصائيات
+    // ==============================================
+    function getNoteStats(text) {
+      if (!text) return { words: 0, chars: 0, lines: 0 };
+      const trimmed = text.trim();
+      const words = trimmed ? trimmed.split(/\s+/).length : 0;
+      const chars = text.length;
+      const lines = text.split('\n').filter(line => line.trim()).length;
+      return { words, chars, lines };
+    }
+
+    // ==============================================
+    //  الهيكل الأساسي للبيانات
+    // ==============================================
+    let state = JSON.parse(localStorage.getItem('projects_app_data')) || {
+      projects: [],
+      activeProjectId: null,
+      activeNoteId: null
+    };
+
+    // حفظ أسرع باستخدام debounce
+    let saveTimeout = null;
+    function saveData() {
+      if (saveTimeout) clearTimeout(saveTimeout);
+      saveTimeout = setTimeout(() => {
+        localStorage.setItem('projects_app_data', JSON.stringify(state));
+      }, 100);
+    }
+
+    function showToast(message, type = '') {
+      const toast = document.getElementById('toast');
+      toast.textContent = message;
+      toast.className = 'toast';
+      if (type) toast.classList.add(type);
+      toast.classList.add('show');
+      clearTimeout(toast._timeout);
+      toast._timeout = setTimeout(() => toast.classList.remove('show'), 2500);
+    }
+
+    // ==============================================
+    //  دوال المشاريع والملاحظات
+    // ==============================================
+    function showNewProjectModal() {
+      showModal('📁 مشروع جديد', 'أدخل اسم المشروع الجديد:', 'اسم المشروع...', (value) => {
+        if (value && value.trim()) {
+          createNewProject(value.trim());
+        }
+      });
+    }
+
+    function createNewProject(title) {
+      const newProject = {
+        id: 'proj_' + Date.now(),
+        title: title,
+        notes: []
+      };
+
+      state.projects.push(newProject);
+      state.activeProjectId = newProject.id;
+      saveData();
+      render();
+      showToast(`✅ تم إنشاء مشروع "${title}"`, 'success');
+    }
+
+    function deleteProject(id, event) {
+      event.stopPropagation();
+      const project = state.projects.find(p => p.id === id);
+      if (!project) return;
+
+      showModal('🗑️ حذف المشروع', `هل أنت متأكد من حذف مشروع "${project.title}" بجميع ملاحظاته؟`, '', (confirmed) => {
+        if (confirmed === 'تأكيد' || confirmed === 'نعم' || confirmed === 'yes') {
+          state.projects = state.projects.filter(p => p.id !== id);
+          if (state.activeProjectId === id) {
+            state.activeProjectId = state.projects.length ? state.projects[0].id : null;
+          }
+          saveData();
+          render();
+          showToast('🗑️ تم حذف المشروع', 'error');
+        }
+      });
+    }
+
+    function createNewNote() {
+      const project = state.projects.find(p => p.id === state.activeProjectId);
+      if (!project) return;
+
+      const newNote = {
+        id: 'note_' + Date.now(),
+        title: 'ملاحظة جديدة',
+        content: ''
+      };
+
+      project.notes.push(newNote);
+      state.activeNoteId = newNote.id;
+      saveData();
+      render();
+      showToast('✅ تم إضافة ملاحظة جديدة', 'success');
+    }
+
+    function deleteNote(noteId) {
+      const project = state.projects.find(p => p.id === state.activeProjectId);
+      if (!project) return;
+
+      const note = project.notes.find(n => n.id === noteId);
+      if (!note) return;
+
+      showModal('🗑️ حذف الملاحظة', `هل أنت متأكد من حذف ملاحظة "${note.title || 'بدون عنوان'}"؟`, '', (confirmed) => {
+        if (confirmed === 'تأكيد' || confirmed === 'نعم' || confirmed === 'yes') {
+          project.notes = project.notes.filter(n => n.id !== noteId);
+          if (state.activeNoteId === noteId) {
+            state.activeNoteId = project.notes.length ? project.notes[0].id : null;
+          }
+          saveData();
+          render();
+          showToast('🗑️ تم حذف الملاحظة', 'error');
+        }
+      });
+    }
+
+    function updateNote(noteId, field, value) {
+      const project = state.projects.find(p => p.id === state.activeProjectId);
+      if (!project) return;
+
+      const note = project.notes.find(n => n.id === noteId);
+      if (note) {
+        note[field] = value;
+        saveData();
+        if (field === 'title') renderTabs();
+        if (field === 'content') updateStats(noteId);
+      }
+    }
+
+    function updateStats(noteId) {
+      const project = state.projects.find(p => p.id === state.activeProjectId);
+      if (!project) return;
+      const note = project.notes.find(n => n.id === noteId);
+      if (!note) return;
+
+      const stats = getNoteStats(note.content);
+      const statsEl = document.getElementById(`stats_${noteId}`);
+      if (statsEl) {
+        statsEl.innerHTML = `
+          <span>📝 ${stats.words} كلمة</span>
+          <span>✏️ ${stats.chars} حرف</span>
+          <span>📄 ${stats.lines} سطر</span>
+        `;
+      }
+    }
+
+    // ==============================================
+    //  دوال الرندر - محسّنة
+    // ==============================================
+    function escapeHtml(str) {
+      if (!str) return '';
+      return str.replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+    }
+
+    function escapeJavaScriptString(str) {
+      if (!str) return '';
+      return str.replace(/\\/g, '\\\\')
+                .replace(/`/g, '\\`')
+                .replace(/\$/g, '\\$')
+                .replace(/"/g, '\\"');
+    }
+
+    function renderProjects() {
+      const list = document.getElementById('projectsList');
+      list.innerHTML = '';
+
+      if (state.projects.length === 0) {
+        list.innerHTML = '<div style="color: var(--text-muted); text-align: center; padding: 1rem; font-size: 0.9rem;">لا توجد مشاريع</div>';
+        return;
+      }
+
+      const fragment = document.createDocumentFragment();
+      state.projects.forEach(p => {
+        const li = document.createElement('li');
+        li.className = `project-item ${p.id === state.activeProjectId ? 'active' : ''}`;
+        li.onclick = () => {
+          state.activeProjectId = p.id;
+          state.activeNoteId = p.notes.length ? p.notes[0].id : null;
+          saveData();
+          render();
+        };
+
+        li.innerHTML = `
+          <span>${escapeHtml(p.title)}</span>
+          <button class="btn-icon btn-danger" onclick="deleteProject('${p.id}', event)" title="حذف المشروع">✕</button>
+        `;
+        fragment.appendChild(li);
+      });
+      list.appendChild(fragment);
+    }
+
+    function renderTabs() {
+      const tabsBar = document.getElementById('tabsBar');
+      tabsBar.innerHTML = '';
+
+      const project = state.projects.find(p => p.id === state.activeProjectId);
+      if (!project || project.notes.length === 0) {
+        tabsBar.style.display = 'none';
+        return;
+      }
+
+      tabsBar.style.display = 'flex';
+      const fragment = document.createDocumentFragment();
+      project.notes.forEach(note => {
+        const tab = document.createElement('div');
+        tab.className = `tab ${note.id === state.activeNoteId ? 'active' : ''}`;
+        tab.onclick = () => {
+          state.activeNoteId = note.id;
+          saveData();
+          renderNotes();
+          renderTabs();
+        };
+
+        tab.innerHTML = `
+          <span>${escapeHtml(note.title || 'بدون عنوان')}</span>
+          <button class="btn-icon btn-danger" onclick="event.stopPropagation(); deleteNote('${note.id}')">✕</button>
+        `;
+        fragment.appendChild(tab);
+      });
+      tabsBar.appendChild(fragment);
+    }
+
+    function renderNotes() {
+      const container = document.getElementById('notesContainer');
+      const project = state.projects.find(p => p.id === state.activeProjectId);
+
+      if (!project) {
+        container.innerHTML = '<div class="empty-state">📂 اختر أو أنشئ مشروعاً للبدء</div>';
+        return;
+      }
+
+      if (project.notes.length === 0) {
+        container.innerHTML = '<div class="empty-state">📝 لا يوجد ملاحظات في هذا المشروع<br><small>اضغط على "+ ملاحظة" بالأعلى</small></div>';
+        return;
+      }
+
+      container.innerHTML = '';
+      const fragment = document.createDocumentFragment();
+      project.notes.forEach(note => {
+        const stats = getNoteStats(note.content);
+        const card = document.createElement('div');
+        card.className = 'note-card';
+        card.style.border = note.id === state.activeNoteId ? '2px solid var(--accent)' : '1px solid var(--border)';
+
+        card.innerHTML = `
+          <div class="note-header">
+            <input type="text" class="note-title-input" value="${escapeHtml(note.title)}"
+                   placeholder="عنوان الملاحظة" dir="rtl"
+                   oninput="updateNote('${note.id}', 'title', this.value)"
+                   onkeyup="handleArabicInput(event)">
+          </div>
+          <textarea class="note-body" id="textarea_${note.id}"
+                    placeholder="✍️ اكتب ملاحظتك هنا..." dir="rtl"
+                    oninput="updateNote('${note.id}', 'content', this.value)"
+                    onkeyup="handleArabicInput(event)"
+                    onfocus="state.activeNoteId = '${note.id}'; renderTabs();">${escapeHtml(note.content)}</textarea>
+          <div class="note-actions">
+            <div class="note-stats" id="stats_${note.id}">
+              <span>📝 ${stats.words} كلمة</span>
+              <span>✏️ ${stats.chars} حرف</span>
+              <span>📄 ${stats.lines} سطر</span>
+            </div>
+            <div class="btn-group">
+              <button class="btn-icon" onclick="selectAllText('textarea_${note.id}')" title="تحديد الكل (Ctrl+A)">📌</button>
+              <button class="btn-icon" onclick="copyOriginalText(\`${escapeJavaScriptString(note.content)}\`)" title="نسخ النص الأصلي">📋</button>
+              <button class="btn-icon" onclick="copyTranslatedText(\`${escapeJavaScriptString(note.content)}\`)" title="نسخ النص المترجم">🔄</button>
+              <button class="btn-icon btn-danger" onclick="clearNoteContent('${note.id}')" title="مسح المحتوى">🗑️</button>
+              <button class="btn-icon btn-danger" onclick="deleteNote('${note.id}')" title="حذف الملاحظة">✕</button>
+            </div>
+          </div>
+        `;
+        fragment.appendChild(card);
+      });
+      container.appendChild(fragment);
+    }
+
+    function render() {
+      const project = state.projects.find(p => p.id === state.activeProjectId);
+      document.getElementById('currentProjectTitle').textContent = project ? project.title : '📂 اختر مشروعاً';
+      document.getElementById('addNoteBtn').style.display = project ? 'block' : 'none';
+
+      renderProjects();
+      renderTabs();
+      renderNotes();
+    }
+
+    // ==============================================
+    //  اختصارات لوحة المفاتيح
+    // ==============================================
+    document.addEventListener('keydown', (e) => {
+      if (e.ctrlKey && e.key === 'a') {
+        const activeElement = document.activeElement;
+        if (activeElement && activeElement.tagName === 'TEXTAREA') {
+          e.preventDefault();
+          activeElement.select();
+          activeElement.setSelectionRange(0, activeElement.value.length);
+          showToast('✅ تم تحديد كل النص', 'success');
+        }
+      }
+    });
+
+    // ==============================================
+    //  مشغل الموسيقى
+    // ==============================================
+
+    // قائمة الأغاني الأونلاين - ضع روابط أغانيك هنا
+    // ملاحظة: يجب أن تكون الملفات في نفس مستودع GitHub
+    const ONLINE_PLAYLIST = [
+      { title: 'أغنية 1', url: 'music/song1.mp3' },
+      { title: 'أغنية 2', url: 'music/song2.mp3' },
+      { title: 'أغنية 3', url: 'music/song3.mp3' },
+      { title: 'أغنية 4', url: 'music/song4.mp3' },
+      { title: 'أغنية 5', url: 'music/song5.mp3' }
+    ];
+
+    let audioPlayer = new Audio();
+    let currentPlaylist = [];
+    let currentTrackIndex = 0;
+    let isShuffleOn = false;
+    let isRepeatOn = false;
+    let isPlaying = false;
+    let currentSource = '';
+
+    // ربط أحداث المشغل
+    audioPlayer.addEventListener('timeupdate', updateProgress);
+    audioPlayer.addEventListener('ended', handleTrackEnd);
+    audioPlayer.addEventListener('error', (e) => {
+      console.warn('خطأ في تشغيل الملف:', e);
+      if (currentSource === 'online') {
+        showToast('⚠️ تعذر تشغيل الملف، جاري التالي...', 'error');
+        setTimeout(() => nextTrack(), 1000);
+      }
+    });
+
+    audioPlayer.volume = 0.7;
+
+    function showMusicDialog() {
+      document.getElementById('musicModalOverlay').classList.add('show');
+    }
+
+    function closeMusicModal() {
+      document.getElementById('musicModalOverlay').classList.remove('show');
+    }
+
+    function showLocalMusicDialog() {
+      closeMusicModal();
+      document.getElementById('localMusicModalOverlay').classList.add('show');
+      renderLocalFiles();
+    }
+
+    function closeLocalMusicModal() {
+      document.getElementById('localMusicModalOverlay').classList.remove('show');
+    }
+
+    // ---- موسيقى أونلاين ----
+    function startOnlineMusic() {
+      if (ONLINE_PLAYLIST.length === 0) {
+        showToast('⚠️ لا توجد أغاني مضافة في المكتبة', 'error');
+        return;
+      }
+      currentPlaylist = [...ONLINE_PLAYLIST];
+      currentSource = 'online';
+      currentTrackIndex = 0;
+      isShuffleOn = true;
+      updateShuffleBtn();
+      playTrack(0);
+      closeMusicModal();
+      showMusicPlayerBar();
+      showToast('🌐 تم تشغيل المكتبة الأونلاين', 'success');
+    }
+
+    // ---- موسيقى محلية ----
+    let localFiles = [];
+
+    function handleLocalFiles(event) {
+      const files = Array.from(event.target.files);
+      if (files.length === 0) return;
+      localFiles = [...localFiles, ...files];
+      renderLocalFiles();
+      showToast(`✅ تم إضافة ${files.length} ملف`, 'success');
+    }
+
+    function renderLocalFiles() {
+      const list = document.getElementById('localFilesList');
+      if (localFiles.length === 0) {
+        list.innerHTML = '<div style="text-align:center;color:var(--text-muted);font-size:0.85rem;padding:0.5rem;">لم يتم اختيار ملفات بعد</div>';
+        document.getElementById('playLocalBtn').disabled = true;
+        return;
+      }
+
+      list.innerHTML = '';
+      localFiles.forEach((file, index) => {
+        const item = document.createElement('div');
+        item.className = 'local-file-item';
+        item.innerHTML = `
+          <span>🎵</span>
+          <span class="file-name">${escapeHtml(file.name)}</span>
+          <button class="file-remove" onclick="removeLocalFile(${index})">✕</button>
+        `;
+        list.appendChild(item);
+      });
+      document.getElementById('playLocalBtn').disabled = false;
+    }
+
+    function removeLocalFile(index) {
+      localFiles.splice(index, 1);
+      renderLocalFiles();
+    }
+
+    function playLocalMusic() {
+      if (localFiles.length === 0) return;
+      currentPlaylist = localFiles.map(file => ({
+        title: file.name.replace(/\.[^/.]+$/, ''),
+        url: URL.createObjectURL(file),
+        isLocal: true
+      }));
+      currentSource = 'local';
+      currentTrackIndex = 0;
+      isShuffleOn = true;
+      updateShuffleBtn();
+      playTrack(0);
+      closeLocalMusicModal();
+      showMusicPlayerBar();
+      showToast('📂 تم تشغيل المكتبة المحلية', 'success');
+    }
+
+    // ---- دوال التشغيل ----
+    function playTrack(index) {
+      if (currentPlaylist.length === 0) return;
+      currentTrackIndex = index;
+      const track = currentPlaylist[index];
+      if (!track) return;
+
+      audioPlayer.src = track.url;
+      audioPlayer.load();
+      audioPlayer.play().then(() => {
+        isPlaying = true;
+        updatePlayPauseBtn();
+        updateMusicInfo(track);
+      }).catch(err => {
+        console.warn('خطأ في التشغيل:', err);
+        showToast('⚠️ تعذر تشغيل الملف', 'error');
+      });
+    }
+
+    function togglePlayPause() {
+      if (currentPlaylist.length === 0) return;
+      if (audioPlayer.paused) {
+        audioPlayer.play();
+        isPlaying = true;
+        updatePlayPauseBtn();
+      } else {
+        audioPlayer.pause();
+        isPlaying = false;
+        updatePlayPauseBtn();
+      }
+    }
+
+    function nextTrack() {
+      if (currentPlaylist.length === 0) return;
+      let nextIndex;
+      if (isShuffleOn) {
+        nextIndex = Math.floor(Math.random() * currentPlaylist.length);
+        if (nextIndex === currentTrackIndex && currentPlaylist.length > 1) {
+          nextIndex = (nextIndex + 1) % currentPlaylist.length;
+        }
+      } else {
+        nextIndex = (currentTrackIndex + 1) % currentPlaylist.length;
+      }
+      playTrack(nextIndex);
+    }
+
+    function prevTrack() {
+      if (currentPlaylist.length === 0) return;
+      let prevIndex;
+      if (isShuffleOn) {
+        prevIndex = Math.floor(Math.random() * currentPlaylist.length);
+      } else {
+        prevIndex = (currentTrackIndex - 1 + currentPlaylist.length) % currentPlaylist.length;
+      }
+      playTrack(prevIndex);
+    }
+
+    function handleTrackEnd() {
+      if (isRepeatOn) {
+        audioPlayer.currentTime = 0;
+        audioPlayer.play();
+      } else {
+        nextTrack();
+      }
+    }
+
+    function toggleShuffle() {
+      isShuffleOn = !isShuffleOn;
+      updateShuffleBtn();
+      showToast(isShuffleOn ? '🔀 التشغيل العشوائي مفعل' : '➡️ التشغيل العشوائي معطل', 'success');
+    }
+
+    function updateShuffleBtn() {
+      const btn = document.getElementById('shuffleBtn');
+      btn.style.background = isShuffleOn ? 'var(--music-accent)' : 'rgba(255,255,255,0.1)';
+    }
+
+    function toggleRepeat() {
+      isRepeatOn = !isRepeatOn;
+      updateRepeatBtn();
+      showToast(isRepeatOn ? '🔁 التكرار مفعل' : '➡️ التكرار معطل', 'success');
+    }
+
+    function updateRepeatBtn() {
+      const btn = document.getElementById('repeatBtn');
+      btn.style.background = isRepeatOn ? 'var(--music-accent)' : 'rgba(255,255,255,0.1)';
+    }
+
+    function updatePlayPauseBtn() {
+      document.getElementById('playPauseBtn').textContent = isPlaying ? '⏸️' : '▶️';
+    }
+
+    function updateMusicInfo(track) {
+      document.getElementById('musicTitle').textContent = track.title || '—';
+      document.getElementById('musicSource').textContent = currentSource === 'online' ? '🌐 أونلاين' : '📂 محلي';
+    }
+
+    function updateProgress() {
+      if (!audioPlayer.duration) return;
+      const percent = (audioPlayer.currentTime / audioPlayer.duration) * 100;
+      document.getElementById('musicProgressBar').style.width = percent + '%';
+    }
+
+    function seekMusic(event) {
+      if (!audioPlayer.duration) return;
+      const rect = event.currentTarget.getBoundingClientRect();
+      const clickX = event.clientX - rect.left;
+      const percent = clickX / rect.width;
+      audioPlayer.currentTime = percent * audioPlayer.duration;
+    }
+
+    function setVolume(value) {
+      audioPlayer.volume = value / 100;
+    }
+
+    function showMusicPlayerBar() {
+      document.getElementById('musicPlayerBar').classList.add('show');
+      document.getElementById('musicBtn').classList.add('active');
+    }
+
+    function closeMusicPlayer() {
+      audioPlayer.pause();
+      audioPlayer.src = '';
+      isPlaying = false;
+      currentPlaylist = [];
+      document.getElementById('musicPlayerBar').classList.remove('show');
+      document.getElementById('musicBtn').classList.remove('active');
+      showToast('⏹️ تم إيقاف المشغل', 'error');
+    }
+
+    // ==============================================
+    //  التشغيل الأولي
+    // ==============================================
+    setArabicMode(isArabicMode);
+    render();
+  </script>
+</body>
+</html>
